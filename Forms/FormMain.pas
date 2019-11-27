@@ -85,7 +85,7 @@ type
     ConnectionSB: TStatusBar;
     MetaDataObjectName2CB: TComboBox;
     MetaDataObjectName2L: TLabel;
-    TreeView1: TTreeView;
+    MetadataTreeV: TTreeView;
     Splitter2: TSplitter;
     SqlProc: TZSQLProcessor;
     procedure ConnectBtnClick(Sender: TObject);
@@ -116,6 +116,7 @@ type
     procedure exportDataCsvBtnClick(Sender: TObject);
     procedure MainQAfterOpen(DataSet: TDataSet);
     procedure MainQAfterClose(DataSet: TDataSet);
+    procedure MetadataTreeVDblClick(Sender: TObject);
   private
     { Private-Deklarationen }
     FConnectionProfiles: Array of TConnectionProfile;
@@ -138,7 +139,7 @@ implementation
 
 {$R *.dfm}
 
-uses {$IFNDEF FPC}ADODB,{$IFEND} ZDBCIntfs, Math, IniFiles, ZClasses, IksCsv, ShellApi, ZDbcOdbcUtils, System.UITypes;
+uses {$IFNDEF FPC}ADODB,{$IFEND} ZDBCIntfs, Math, IniFiles, ZClasses, IksCsv, ShellApi, ZDbcOdbcUtils, System.UITypes, Types;
 
 const
   ConnectionProfilePrefix = 'ConnectionProfile_';
@@ -353,6 +354,11 @@ end;
 procedure TForm1.ConnectBtnClick(Sender: TObject);
 var
   DbProtocol: String;
+  TableNames: TStringList;
+  TableTypes: TStringDynArray;
+  x: Integer;
+  TablesNode: TTreeNode;
+  Node: TTreeNode;
 begin
   if not DBConn.Connected then begin
     DBConn.Properties.Text := PropertiesM.Lines.Text;
@@ -404,12 +410,34 @@ begin
     end else begin
       SynSQLSyn.SQLDialect := sqlStandard;
     end;
-    SynSQLSyn.TableNames.BeginUpdate;
+
+    TablesNode := MetadataTreeV.Items.AddChild(nil, 'Tables');
+    SetLength(TableTypes, 1);
+    TableTypes[0] := 'TABLE';
+    TableNames := TStringList.Create;
     try
-      DBConn.GetTableNames('%', SynSQLSyn.TableNames);
+      TableNames.BeginUpdate;
+      try
+        DBConn.GetTableNames('', '', TableTypes, TableNames);
+      finally
+        TableNames.EndUpdate;
+      end;
+      TableNames.Sort;
+      SynSQLSyn.TableNames.Assign(TableNames);
+
+      MetadataTreeV.Items.BeginUpdate;
+      try
+        for X := 0 to TableNames.Count - 1 do begin
+          Node := MetadataTreeV.Items.AddChild(TablesNode, TableNames.Strings[X]);
+          Node.SelectedIndex := 1;
+        end;
+      finally
+        MetadataTreeV.Items.EndUpdate;
+      end;
     finally
-      SynSQLSyn.TableNames.EndUpdate;
+      FreeAndNil(TableNames);
     end;
+
     SynSQLSyn.ProcNames.BeginUpdate;
     try
       DBConn.GetStoredProcNames('%', SynSQLSyn.ProcNames);
@@ -434,6 +462,9 @@ begin
 end;
 
 procedure TForm1.DBConnAfterDisconnect(Sender: TObject);
+var
+  Node: TTreeNode;
+  X: Integer;
 begin
   SqlTS.TabVisible := False;
   MetadataTS.TabVisible := false;
@@ -441,6 +472,8 @@ begin
   StartTransactionBtn.Enabled := false;
   CommitBtn.Enabled := false;
   RollbackBtn.Enabled := false;
+
+  MetadataTreeV.Items.Clear;
 end;
 
 procedure TForm1.DBConnCommit(Sender: TObject);
@@ -584,6 +617,13 @@ end;
 procedure TForm1.MetadataMDAfterOpen(DataSet: TDataSet);
 begin
   autosizeDS(MetadataMD);
+end;
+
+procedure TForm1.MetadataTreeVDblClick(Sender: TObject);
+begin
+  if MetadataTreeV.Selected.SelectedIndex = 1 then begin
+    SynEdit.SelText := MetadataTreeV.Selected.Text;
+  end;
 end;
 
 procedure TForm1.OpenFileBtnClick(Sender: TObject);

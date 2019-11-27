@@ -23,16 +23,12 @@ object Form1: TForm1
     Top = 8
     Width = 953
     Height = 444
-    ActivePage = SqlTS
+    ActivePage = ConnectionTS
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 0
     object ConnectionTS: TTabSheet
       Caption = 'Connection'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       DesignSize = (
         945
         416)
@@ -234,10 +230,6 @@ object Form1: TForm1
         object DataSheet: TTabSheet
           Caption = 'Data'
           ImageIndex = 1
-          ExplicitLeft = 0
-          ExplicitTop = 0
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           DesignSize = (
             937
             117)
@@ -388,26 +380,22 @@ object Form1: TForm1
         Panels = <>
         SimplePanel = True
       end
-      object TreeView1: TTreeView
+      object MetadataTreeV: TTreeView
         Left = 0
         Top = 41
         Width = 168
         Height = 208
         Align = alLeft
         Indent = 19
+        ReadOnly = True
         TabOrder = 4
-        Items.NodeData = {
-          03010000002A0000000000000000000000FFFFFFFFFFFFFFFF00000000000000
-          000000000001065400610062006C0065007300}
+        OnDblClick = MetadataTreeVDblClick
+        ExplicitLeft = -3
       end
     end
     object MetadataTS: TTabSheet
       Caption = 'Metadata'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Panel2: TPanel
         Left = 0
         Top = 0
