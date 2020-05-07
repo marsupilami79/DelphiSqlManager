@@ -79,7 +79,6 @@ type
     MetaDataObjectNameL: TLabel;
     exportMetadataCsvBtn: TButton;
     exportCsvSD: TSaveDialog;
-    exportDataCsvBtn: TButton;
     StatusSB: TStatusBar;
     DBNavigator1: TDBNavigator;
     ConnectionSB: TStatusBar;
@@ -88,6 +87,10 @@ type
     MetadataTreeV: TTreeView;
     Splitter2: TSplitter;
     SqlProc: TZSQLProcessor;
+    Panel3: TPanel;
+    Memo1: TMemo;
+    exportDataCsvBtn: TButton;
+    Splitter3: TSplitter;
     procedure ConnectBtnClick(Sender: TObject);
     procedure RunSqlBtnClick(Sender: TObject);
     procedure MetadataCBChange(Sender: TObject);
@@ -117,6 +120,7 @@ type
     procedure MainQAfterOpen(DataSet: TDataSet);
     procedure MainQAfterClose(DataSet: TDataSet);
     procedure MetadataTreeVDblClick(Sender: TObject);
+    procedure DBGrid1ColEnter(Sender: TObject);
   private
     { Private-Deklarationen }
     FConnectionProfiles: Array of TConnectionProfile;
@@ -497,6 +501,19 @@ begin
   RollbackBtn.Enabled := true;
 end;
 
+procedure TForm1.DBGrid1ColEnter(Sender: TObject);
+var
+  Grid: TDBGrid;
+  TargetStr: String;
+begin
+  TargetStr := '';
+  Grid := (Sender as TDBGrid);
+  if Assigned(Grid.SelectedField) then
+    if (Grid.SelectedField is TMemoField) or (Grid.SelectedField is TWideMemoField)  then
+      TargetStr := Grid.SelectedField.AsString;
+  Memo1.Lines.Text := TargetStr;
+end;
+
 procedure TForm1.exportDataCsvBtnClick(Sender: TObject);
 begin
   doCsvExport(MainQ, exportCsvSD.FileName);
@@ -652,6 +669,7 @@ begin
   MainQ.Close;
   MainQ.SQL.Text := SynEdit.Lines.Text;
   StatusSB.SimpleText := '';
+  DBConn.ShowSQLHourGlass;
   try
     StartTime := now;
     MainQ.DisableControls;
@@ -669,6 +687,7 @@ begin
     StatusSB.SimpleText := 'Runtime: ' + FormatDateTime('nn:ss.zzz', Endtime - StartTime);
   finally
     MainQ.EnableControls;
+    DBConn.HideSQLHourGlass;
   end;
 
   UpdateMessages;

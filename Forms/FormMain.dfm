@@ -2,7 +2,7 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'Form1'
-  ClientHeight = 460
+  ClientHeight = 612
   ClientWidth = 970
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -15,14 +15,14 @@ object Form1: TForm1
   OnCreate = FormCreate
   DesignSize = (
     970
-    460)
+    612)
   PixelsPerInch = 96
   TextHeight = 13
   object PageControl2: TPageControl
     Left = 8
     Top = 8
     Width = 953
-    Height = 444
+    Height = 596
     ActivePage = ConnectionTS
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 0
@@ -31,7 +31,7 @@ object Form1: TForm1
       ImageIndex = 2
       DesignSize = (
         945
-        416)
+        568)
       object Label1: TLabel
         Left = 167
         Top = 9
@@ -168,7 +168,7 @@ object Form1: TForm1
         Left = 16
         Top = 160
         Width = 825
-        Height = 225
+        Height = 377
         Anchors = [akLeft, akTop, akRight, akBottom]
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -180,7 +180,7 @@ object Form1: TForm1
       end
       object ConnectionSB: TStatusBar
         Left = 0
-        Top = 397
+        Top = 549
         Width = 945
         Height = 19
         Panels = <>
@@ -191,7 +191,7 @@ object Form1: TForm1
       Caption = 'SQL'
       object Splitter1: TSplitter
         Left = 0
-        Top = 249
+        Top = 401
         Width = 945
         Height = 3
         Cursor = crVSplit
@@ -204,16 +204,16 @@ object Form1: TForm1
       object Splitter2: TSplitter
         Left = 168
         Top = 41
-        Height = 208
+        Height = 360
         ExplicitTop = 96
         ExplicitHeight = 100
       end
       object ResultTS: TPageControl
         Left = 0
-        Top = 252
+        Top = 404
         Width = 945
         Height = 145
-        ActivePage = MessagesSheet
+        ActivePage = DataSheet
         Align = alBottom
         TabOrder = 0
         object MessagesSheet: TTabSheet
@@ -230,31 +230,71 @@ object Form1: TForm1
         object DataSheet: TTabSheet
           Caption = 'Data'
           ImageIndex = 1
-          DesignSize = (
-            937
-            117)
-          object DBGrid1: TDBGrid
+          object Panel3: TPanel
             Left = 0
             Top = 0
-            Width = 937
-            Height = 81
-            Anchors = [akLeft, akTop, akRight, akBottom]
-            DataSource = MainDS
-            Options = [dgEditing, dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgMultiSelect, dgTitleClick, dgTitleHotTrack]
+            Width = 752
+            Height = 117
+            Align = alClient
+            Caption = 'Panel3'
             TabOrder = 0
-            TitleFont.Charset = DEFAULT_CHARSET
-            TitleFont.Color = clWindowText
-            TitleFont.Height = -11
-            TitleFont.Name = 'Tahoma'
-            TitleFont.Style = []
+            DesignSize = (
+              752
+              117)
+            object Splitter3: TSplitter
+              Left = 748
+              Top = 1
+              Height = 115
+              Align = alRight
+              ExplicitLeft = 752
+              ExplicitTop = 24
+              ExplicitHeight = 100
+            end
+            object DBGrid1: TDBGrid
+              Left = 0
+              Top = 0
+              Width = 744
+              Height = 81
+              Anchors = [akLeft, akTop, akRight, akBottom]
+              DataSource = MainDS
+              Options = [dgEditing, dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgMultiSelect, dgTitleClick, dgTitleHotTrack]
+              TabOrder = 0
+              TitleFont.Charset = DEFAULT_CHARSET
+              TitleFont.Color = clWindowText
+              TitleFont.Height = -11
+              TitleFont.Name = 'Tahoma'
+              TitleFont.Style = []
+              OnColEnter = DBGrid1ColEnter
+            end
+            object DBNavigator1: TDBNavigator
+              Left = 3
+              Top = 87
+              Width = 240
+              Height = 25
+              DataSource = MainDS
+              Anchors = [akLeft, akBottom]
+              TabOrder = 1
+            end
+            object exportDataCsvBtn: TButton
+              Left = 646
+              Top = 87
+              Width = 100
+              Height = 25
+              Anchors = [akRight, akBottom]
+              Caption = 'export to CSV'
+              Enabled = False
+              TabOrder = 2
+              OnClick = exportDataCsvBtnClick
+            end
           end
-          object DBNavigator1: TDBNavigator
-            Left = 304
-            Top = 88
-            Width = 240
-            Height = 25
-            DataSource = MainDS
-            Anchors = [akLeft, akBottom]
+          object Memo1: TMemo
+            Left = 752
+            Top = 0
+            Width = 185
+            Height = 117
+            Align = alRight
+            Lines.Strings = (
+              'Memo1')
             TabOrder = 1
           end
         end
@@ -263,7 +303,7 @@ object Form1: TForm1
         Left = 171
         Top = 41
         Width = 774
-        Height = 208
+        Height = 360
         Align = alClient
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -361,20 +401,10 @@ object Form1: TForm1
           TabOrder = 6
           OnClick = SaveFileBtnClick
         end
-        object exportDataCsvBtn: TButton
-          Left = 832
-          Top = 10
-          Width = 100
-          Height = 25
-          Caption = 'export to CSV'
-          Enabled = False
-          TabOrder = 7
-          OnClick = exportDataCsvBtnClick
-        end
       end
       object StatusSB: TStatusBar
         Left = 0
-        Top = 397
+        Top = 549
         Width = 945
         Height = 19
         Panels = <>
@@ -384,13 +414,12 @@ object Form1: TForm1
         Left = 0
         Top = 41
         Width = 168
-        Height = 208
+        Height = 360
         Align = alLeft
         Indent = 19
         ReadOnly = True
         TabOrder = 4
         OnDblClick = MetadataTreeVDblClick
-        ExplicitLeft = -3
       end
     end
     object MetadataTS: TTabSheet
@@ -493,7 +522,7 @@ object Form1: TForm1
         Left = 0
         Top = 57
         Width = 945
-        Height = 359
+        Height = 511
         Align = alClient
         DataSource = MetadataDS
         TabOrder = 1
