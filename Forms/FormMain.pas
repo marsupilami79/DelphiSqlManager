@@ -320,7 +320,8 @@ begin
       MetadataMD.Open;
     end;
     14: begin
-      MetadataMD.TableName := MetaDataObjectNameCB.Text;
+      MetadataMD.Schema := MetaDataObjectNameCB.Text;
+      MetadataMD.TableName := MetaDataObjectName2CB.Text;
       MetadataMD.MetadataType := mdTables;
       MetadataMD.Open;
     end;
@@ -591,9 +592,15 @@ begin
       MetaDataObjectNameL.Visible := false;
       MetaDataObjectNameCB.Visible := false;
     end;
-    0, 2, 3, 5, 6, 7, 8, 13, 14, 16, 19: begin //mdBestRowIdentifier, mdColumnPrivileges, mdColumns, mdExportedKeys, mdImportedKeys, mdIndexInfo, mdPrimaryKeys, mdTablePrivileges, mdTables, mdTriggers, mdVersionColumns
+    0, 2, 3, 5, 6, 7, 8, 13, 16, 19: begin //mdBestRowIdentifier, mdColumnPrivileges, mdColumns, mdExportedKeys, mdImportedKeys, mdIndexInfo, mdPrimaryKeys, mdTablePrivileges, mdTriggers, mdVersionColumns
       MetaDataObjectNameL.Caption := 'Table Name:';
       DBConn.GetTableNames('', MetaDataObjectNameCB.Items);
+      MetaDataObjectNameL.Visible := true;
+      MetaDataObjectNameCB.Visible := true;
+    end;
+    14: begin // mdTables
+      MetaDataObjectNameL.Caption := 'Schema Name:';
+      DBConn.GetSchemaNames(MetaDataObjectNameCB.Items);
       MetaDataObjectNameL.Visible := true;
       MetaDataObjectNameCB.Visible := true;
     end;
@@ -623,7 +630,14 @@ begin
       MetaDataObjectName2CB.Items.Clear;
       MetaDataObjectName2L.Visible := true;
       MetaDataObjectName2CB.Visible := true;
-      end
+    end;
+    14: begin // mdTables
+      MetaDataObjectName2L.Caption := 'Table Name:';
+      MetaDataObjectName2CB.Items.Clear;
+      DBConn.GetTableNames('', MetaDataObjectName2CB.Items);
+      MetaDataObjectName2L.Visible := true;
+      MetaDataObjectName2CB.Visible := true;
+    end;
     else begin
       MetaDataObjectName2L.Visible := false;
       MetaDataObjectName2CB.Visible := false;
@@ -678,7 +692,7 @@ begin
       MainQ.Open;
     except
       on E: EZSQLException do begin
-        MessagesM.Lines.Add(E.Message);
+        MessagesM.Lines.Add(E.ClassName + ': ' + E.Message);
       end;
     end;
     Endtime := now;

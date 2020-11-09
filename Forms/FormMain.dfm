@@ -23,7 +23,7 @@ object Form1: TForm1
     Top = 8
     Width = 953
     Height = 596
-    ActivePage = ConnectionTS
+    ActivePage = MetadataTS
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 0
     object ConnectionTS: TTabSheet
@@ -548,7 +548,6 @@ object Form1: TForm1
   end
   object DBConn: TZConnection
     ControlsCodePage = cCP_UTF16
-    AutoEncodeStrings = True
     ClientCodepage = 'UTF8'
     Catalog = ''
     Properties.Strings = (
