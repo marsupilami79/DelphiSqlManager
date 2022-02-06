@@ -10,20 +10,26 @@ object Form1: TForm1
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
+  PixelsPerInch = 96
   DesignSize = (
     970
     612)
-  PixelsPerInch = 96
   TextHeight = 13
+  object Label9: TLabel
+    Left = 306
+    Top = 41
+    Width = 36
+    Height = 13
+    Caption = 'Server:'
+  end
   object PageControl2: TPageControl
     Left = 8
     Top = 8
     Width = 953
     Height = 596
-    ActivePage = MetadataTS
+    ActivePage = SqlTS
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 0
     object ConnectionTS: TTabSheet
@@ -40,8 +46,8 @@ object Form1: TForm1
         Caption = 'Server:'
       end
       object Label2: TLabel
-        Left = 294
-        Top = 9
+        Left = 350
+        Top = 6
         Width = 50
         Height = 13
         Caption = 'Database:'
@@ -81,6 +87,13 @@ object Form1: TForm1
         Width = 53
         Height = 13
         Caption = 'Properties:'
+      end
+      object Label10: TLabel
+        Left = 294
+        Top = 9
+        Width = 24
+        Height = 13
+        Caption = 'Port:'
       end
       object BrowseClientLibBtn: TButton
         Left = 733
@@ -122,9 +135,9 @@ object Form1: TForm1
         OnClick = ConnectBtnClick
       end
       object DatabaseEdt: TEdit
-        Left = 294
+        Left = 350
         Top = 25
-        Width = 433
+        Width = 377
         Height = 21
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 2
@@ -185,6 +198,15 @@ object Form1: TForm1
         Height = 19
         Panels = <>
         SimplePanel = True
+      end
+      object PortEdt: TEdit
+        Left = 294
+        Top = 25
+        Width = 50
+        Height = 21
+        TabOrder = 11
+        Text = '0'
+        OnExit = HostEdtExit
       end
     end
     object SqlTS: TTabSheet
@@ -250,7 +272,7 @@ object Form1: TForm1
               ExplicitTop = 24
               ExplicitHeight = 100
             end
-            object DBGrid1: TDBGrid
+            object DataG: TDBGrid
               Left = 0
               Top = 0
               Width = 744
@@ -264,7 +286,7 @@ object Form1: TForm1
               TitleFont.Height = -11
               TitleFont.Name = 'Tahoma'
               TitleFont.Style = []
-              OnColEnter = DBGrid1ColEnter
+              OnColEnter = DataGColEnter
             end
             object DBNavigator1: TDBNavigator
               Left = 3
@@ -576,11 +598,11 @@ object Form1: TForm1
     Top = 128
   end
   object MainQ: TZQuery
-    Connection = DBConn
     AfterOpen = MainQAfterOpen
     AfterClose = MainQAfterClose
-    Params = <>
+    Connection = DBConn
     Options = [doCalcDefaults, doSmartOpen]
+    Params = <>
     Left = 360
     Top = 128
   end
@@ -592,8 +614,8 @@ object Form1: TForm1
     Top = 187
   end
   object MetadataMD: TZSQLMetadata
-    Connection = DBConn
     AfterOpen = MetadataMDAfterOpen
+    Connection = DBConn
     MetadataType = mdProcedures
     Left = 316
     Top = 252

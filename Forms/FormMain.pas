@@ -35,7 +35,7 @@ type
     SynEdit: TSynEdit;
     MessagesM: TMemo;
     MainDS: TDataSource;
-    DBGrid1: TDBGrid;
+    DataG: TDBGrid;
     MainQ: TZQuery;
     ConnectBtn: TButton;
     ZSQLMonitor1: TZSQLMonitor;
@@ -91,6 +91,9 @@ type
     Memo1: TMemo;
     exportDataCsvBtn: TButton;
     Splitter3: TSplitter;
+    Label9: TLabel;
+    PortEdt: TEdit;
+    Label10: TLabel;
     procedure ConnectBtnClick(Sender: TObject);
     procedure RunSqlBtnClick(Sender: TObject);
     procedure MetadataCBChange(Sender: TObject);
@@ -120,7 +123,7 @@ type
     procedure MainQAfterOpen(DataSet: TDataSet);
     procedure MainQAfterClose(DataSet: TDataSet);
     procedure MetadataTreeVDblClick(Sender: TObject);
-    procedure DBGrid1ColEnter(Sender: TObject);
+    procedure DataGColEnter(Sender: TObject);
   private
     { Private-Deklarationen }
     FConnectionProfiles: Array of TConnectionProfile;
@@ -132,6 +135,7 @@ type
     procedure LoadConnectionProfiles;
     procedure UpdateMessages;
     procedure doCsvExport(DataSet: TDataSet; FileName: String);
+    procedure ShowClobText;
   public
     { Public-Deklarationen }
   end;
@@ -143,7 +147,7 @@ implementation
 
 {$R *.dfm}
 
-uses {$IFNDEF FPC}ADODB,{$IFEND} ZDBCIntfs, Math, IniFiles, ZClasses, IksCsv, ShellApi, ZDbcOdbcUtils, System.UITypes, Types;
+uses {$IFNDEF FPC}ADODB,{$IFEND} ZDBCIntfs, Math, IniFiles, ZClasses, IksCsv, ShellApi, ZDbcOdbcUtils, System.UITypes, Types, ZExceptions;
 
 const
   ConnectionProfilePrefix = 'ConnectionProfile_';
@@ -369,6 +373,7 @@ begin
     DBConn.Properties.Text := PropertiesM.Lines.Text;
     DBConn.Protocol := ProtocolsCB.Text;
     DBConn.HostName := HostEdt.Text;
+    DBConn.Port := StrToInt(PortEdt.Text);
     DBConn.Database := DatabaseEdt.Text;
     DBConn.LibraryLocation := Trim(ClientLibEdt.Text);
     DBConn.User := UserNameEdt.Text;
@@ -467,9 +472,6 @@ begin
 end;
 
 procedure TForm1.DBConnAfterDisconnect(Sender: TObject);
-var
-  Node: TTreeNode;
-  X: Integer;
 begin
   SqlTS.TabVisible := False;
   MetadataTS.TabVisible := false;
@@ -502,17 +504,30 @@ begin
   RollbackBtn.Enabled := true;
 end;
 
-procedure TForm1.DBGrid1ColEnter(Sender: TObject);
+procedure TForm1.ShowClobText;
 var
-  Grid: TDBGrid;
   TargetStr: String;
+  Field: TField;
 begin
   TargetStr := '';
-  Grid := (Sender as TDBGrid);
-  if Assigned(Grid.SelectedField) then
-    if (Grid.SelectedField is TMemoField) or (Grid.SelectedField is TWideMemoField)  then
-      TargetStr := Grid.SelectedField.AsString;
+  if Assigned(DataG.SelectedField) then
+    Field := DataG.SelectedField
+  else begin
+    if MainQ.Fields.Count > 0 then
+      Field := MainQ.Fields[0];
+  end;
+
+  if Assigned(Field) then
+     if (Field is TMemoField) or (Field is TWideMemoField)  then
+      TargetStr := Field.AsString;
+
   Memo1.Lines.Text := TargetStr;
+end;
+
+
+procedure TForm1.DataGColEnter(Sender: TObject);
+begin
+  ShowClobText;
 end;
 
 procedure TForm1.exportDataCsvBtnClick(Sender: TObject);
@@ -575,6 +590,7 @@ procedure TForm1.MainQAfterOpen(DataSet: TDataSet);
 begin
   exportDataCsvBtn.Enabled := true;
   autosizeDS(DataSet);
+  ShowClobText;
 end;
 
 procedure TForm1.MetadataCBChange(Sender: TObject);
