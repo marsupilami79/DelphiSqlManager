@@ -362,7 +362,7 @@ end;
 
 procedure TForm1.ConnectBtnClick(Sender: TObject);
 var
-  DbProtocol: String;
+//  DbProtocol: String;
   TableNames: TStringList;
   TableTypes: TStringDynArray;
   x: Integer;
@@ -396,29 +396,16 @@ begin
     ConnectBtn.Caption := 'Disconnect';
 
     // setup synedit:
-    DbProtocol := LowerCase(DBConn.Protocol);
-    if Copy(DbProtocol, 1, 8) = 'firebird' then begin
-      SynSQLSyn.SQLDialect := sqlInterbase6;
-    end else if Copy(DbProtocol, 1, 13) = 'freetds_mssql' then begin
-      SynSQLSyn.SQLDialect := sqlMSSQL2K;
-    end else if Copy(DbProtocol, 1, 14) = 'freetds_sybase' then begin
-      SynSQLSyn.SQLDialect := sqlSybase;
-    end else if Copy(DbProtocol, 1, 9) = 'interbase' then begin
-      SynSQLSyn.SQLDialect := sqlInterbase6;
-    end else if Copy(DbProtocol, 1, 5) = 'mssql' then begin
-      SynSQLSyn.SQLDialect := sqlMSSQL2K;
-    end else if Copy(DbProtocol, 1, 5) = 'mysql' then begin
-      SynSQLSyn.SQLDialect := sqlMySQL;
-    end else if Copy(DbProtocol, 1, 7) = 'mariadb' then begin
-      SynSQLSyn.SQLDialect := sqlMySQL;
-    end else if Copy(DbProtocol, 1, 6) = 'oracle' then begin
-      SynSQLSyn.SQLDialect := sqlOracle;
-    end else if Copy(DbProtocol, 1, 10) = 'postgresql' then begin
-      SynSQLSyn.SQLDialect := sqlPostgres;
-    end else if Copy(DbProtocol, 1, 6) = 'sybase' then begin
-      SynSQLSyn.SQLDialect := sqlSybase;
-    end else begin
-      SynSQLSyn.SQLDialect := sqlStandard;
+    case DBConn.DbcConnection.GetServerProvider of
+      spMSSQL: SynSQLSyn.SQLDialect := sqlMSSQL2K;
+      spOracle: SynSQLSyn.SQLDialect := sqlOracle;
+      spASE: SynSQLSyn.SQLDialect := sqlSybase;
+      spPostgreSQL: SynSQLSyn.SQLDialect := sqlPostgres;
+      spIB_FB: SynSQLSyn.SQLDialect := sqlInterbase6;
+      spMySQL: SynSQLSyn.SQLDialect := sqlMySQL;
+      spNexusDB: SynSQLSyn.SQLDialect := sqlNexus;
+      spInformix: SynSQLSyn.SQLDialect := sqlInformix;
+      else SynSQLSyn.SQLDialect := sqlStandard;
     end;
 
     TablesNode := MetadataTreeV.Items.AddChild(nil, 'Tables');

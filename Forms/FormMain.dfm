@@ -582,6 +582,7 @@ object Form1: TForm1
     OnCommit = DBConnCommit
     OnRollback = DBConnRollback
     OnStartTransaction = DBConnStartTransaction
+    AutoEncodeStrings = True
     HostName = ''
     Port = 0
     Database = ''
