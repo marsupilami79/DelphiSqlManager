@@ -3,13 +3,11 @@
 program DelphiSqlManager;
 
 uses
-  (*
   madExcept,
   madLinkDisAsm,
   madListHardware,
   madListProcesses,
   madListModules,
-  *)
   Vcl.Forms,
   ikscsv in 'iks\ikscsv.pas',
   FormMain in 'Forms\FormMain.pas' {Form1};

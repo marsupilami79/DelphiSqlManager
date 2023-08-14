@@ -12,7 +12,6 @@ object Form1: TForm1
   Font.Style = []
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
-  PixelsPerInch = 96
   DesignSize = (
     970
     612)
@@ -29,9 +28,11 @@ object Form1: TForm1
     Top = 8
     Width = 953
     Height = 596
-    ActivePage = SqlTS
+    ActivePage = ConnectionTS
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 0
+    ExplicitWidth = 949
+    ExplicitHeight = 595
     object ConnectionTS: TTabSheet
       Caption = 'Connection'
       ImageIndex = 2
@@ -104,6 +105,7 @@ object Form1: TForm1
         Caption = 'Browse'
         TabOrder = 5
         OnClick = BrowseClientLibBtnClick
+        ExplicitLeft = 729
       end
       object BrowseDatabaseBtn: TButton
         Left = 733
@@ -114,6 +116,7 @@ object Form1: TForm1
         Caption = 'Browse'
         TabOrder = 3
         OnClick = BrowseDatabaseBtnClick
+        ExplicitLeft = 729
       end
       object ClientLibEdt: TEdit
         Left = 16
@@ -122,6 +125,7 @@ object Form1: TForm1
         Height = 21
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 4
+        ExplicitWidth = 707
       end
       object ConnectBtn: TButton
         Left = 845
@@ -133,6 +137,7 @@ object Form1: TForm1
         Default = True
         TabOrder = 9
         OnClick = ConnectBtnClick
+        ExplicitLeft = 841
       end
       object DatabaseEdt: TEdit
         Left = 350
@@ -142,6 +147,7 @@ object Form1: TForm1
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 2
         Text = 'St'#246'rk'
+        ExplicitWidth = 373
       end
       object HostEdt: TEdit
         Left = 167
@@ -160,6 +166,7 @@ object Form1: TForm1
         Anchors = [akLeft, akTop, akRight]
         PasswordChar = '*'
         TabOrder = 7
+        ExplicitWidth = 556
       end
       object ProtocolsCB: TComboBox
         Left = 16
@@ -167,6 +174,7 @@ object Form1: TForm1
         Width = 145
         Height = 21
         Style = csDropDownList
+        Sorted = True
         TabOrder = 0
         OnChange = ProtocolsCBChange
       end
@@ -190,6 +198,8 @@ object Form1: TForm1
         Font.Style = []
         ParentFont = False
         TabOrder = 8
+        ExplicitWidth = 821
+        ExplicitHeight = 376
       end
       object ConnectionSB: TStatusBar
         Left = 0
@@ -198,6 +208,8 @@ object Form1: TForm1
         Height = 19
         Panels = <>
         SimplePanel = True
+        ExplicitTop = 548
+        ExplicitWidth = 941
       end
       object PortEdt: TEdit
         Left = 294
@@ -439,8 +451,10 @@ object Form1: TForm1
         Height = 360
         Align = alLeft
         Indent = 19
+        PopupMenu = MetadataPM
         ReadOnly = True
         TabOrder = 4
+        OnContextPopup = MetadataTreeVContextPopup
         OnDblClick = MetadataTreeVDblClick
       end
     end
@@ -582,7 +596,6 @@ object Form1: TForm1
     OnCommit = DBConnCommit
     OnRollback = DBConnRollback
     OnStartTransaction = DBConnStartTransaction
-    AutoEncodeStrings = True
     HostName = ''
     Port = 0
     Database = ''
@@ -602,8 +615,8 @@ object Form1: TForm1
     AfterOpen = MainQAfterOpen
     AfterClose = MainQAfterClose
     Connection = DBConn
-    Options = [doCalcDefaults, doSmartOpen]
     Params = <>
+    Options = [doCalcDefaults, doSmartOpen]
     Left = 360
     Top = 128
   end
@@ -676,5 +689,14 @@ object Form1: TForm1
     Delimiter = ';'
     Left = 356
     Top = 184
+  end
+  object MetadataPM: TPopupMenu
+    Left = 92
+    Top = 336
+  end
+  object ZMemTable1: TZMemTable
+    ControlsCodePage = cDynamic
+    Left = 212
+    Top = 336
   end
 end

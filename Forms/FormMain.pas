@@ -8,7 +8,8 @@ uses
   SynHighlighterSQL, ZAbstractConnection, ZConnection, Vcl.StdCtrls,
   Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.Grids, Vcl.DBGrids, Data.DB,
   ZAbstractRODataset, ZAbstractDataset, ZDataset, ZSqlMonitor, ZSqlMetadata,
-  SynEditMiscClasses, SynEditSearch, Vcl.DBCtrls, ZSqlProcessor;
+  SynEditMiscClasses, SynEditSearch, Vcl.DBCtrls, ZSqlProcessor, Vcl.Menus,
+  ZMemTable;
 
 type
   TConnectionProfile = record
@@ -18,6 +19,52 @@ type
     ClientLibrary: String;
     UserName: String;
     Properties: String;
+  end;
+
+  TItemOptionExecutor = procedure(Node: TTreeNode) of object;
+
+  TMetadataNodeAction = record
+    OptionName: String;
+    OptionExecutor: TItemOptionExecutor;
+  end;
+
+  TMetadataNodeActions = array of TMetadataNodeAction;
+
+  TMetadataUpdateEvent = procedure(Sender: TObject; TableList: TStrings) of object;
+  TMetadataGetSqlScriptEvent = procedure(Sender: TObject; var Script: TStrings) of object;
+
+  Type TMetadataHandler = class(TComponent)
+    protected
+      FMetadataTree: TTreeView;
+      FConnection: TZConnection;
+      FOnTablesUpdate: TMetadataUpdateEvent;
+      FOnGetSqlScript: TMetadataGetSqlScriptEvent;
+    public
+      procedure InitializeTree; virtual; abstract;
+      function GetItemOptions(Node: TTreeNode): TMetadataNodeActions; virtual; abstract;
+    published
+      property MetadataTree: TTreeView read FMetadataTree write FMetadataTree;
+      property Connection: TZConnection read FConnection write FConnection;
+      property OnTablesUpdate: TMetadataUpdateEvent read FOnTablesUpdate write FOnTablesUpdate;
+      property OnGetSqlScript: TMetadataGetSqlScriptEvent read FOnGetSqlScript write FOnGetSqlScript;
+  end;
+
+  Type TGenericMetadataHandler = class(TMetadataHandler)
+    protected
+      FTablesNode: TTreeNode;
+    public
+      procedure InitializeTree; override;
+      function GetItemOptions(Node: TTreeNode): TMetadataNodeActions; override;
+  end;
+
+  Type TFirebirdMetadataHandler = class(TMetadataHandler)
+    protected
+      FDatabaseNode: TTreeNode;
+      FTablesNode: TTreeNode;
+      procedure GetDatabaseSQL(Node: TTreeNode);
+    public
+      procedure InitializeTree; override;
+      function GetItemOptions(Node: TTreeNode): TMetadataNodeActions; override;
   end;
 
   TForm1 = class(TForm)
@@ -94,6 +141,8 @@ type
     Label9: TLabel;
     PortEdt: TEdit;
     Label10: TLabel;
+    MetadataPM: TPopupMenu;
+    ZMemTable1: TZMemTable;
     procedure ConnectBtnClick(Sender: TObject);
     procedure RunSqlBtnClick(Sender: TObject);
     procedure MetadataCBChange(Sender: TObject);
@@ -124,18 +173,25 @@ type
     procedure MainQAfterClose(DataSet: TDataSet);
     procedure MetadataTreeVDblClick(Sender: TObject);
     procedure DataGColEnter(Sender: TObject);
+    procedure MetadataTreeVContextPopup(Sender: TObject; MousePos: TPoint;
+      var Handled: Boolean);
   private
     { Private-Deklarationen }
     FConnectionProfiles: Array of TConnectionProfile;
     FIniFileName: String;
     LastFindTxt: String;
     CurrentFileName: String;
+    MetadataHandler: TMetadataHandler;
+    MetadataNodeActions: TMetadataNodeActions;
     procedure LoadConnectionProfile(const Protocol: String; const Server: String = '<unknown>');
     procedure StoreConnectionProfile;
     procedure LoadConnectionProfiles;
     procedure UpdateMessages;
     procedure doCsvExport(DataSet: TDataSet; FileName: String);
     procedure ShowClobText;
+    procedure OnTablesUpdate(Sender: TObject; Tables: TStrings);
+    procedure ExecuteMetadataOption(Sender: TObject);
+    procedure OnGetSqlScript(Sender: TObject; var Script: TStrings);
   public
     { Public-Deklarationen }
   end;
@@ -147,7 +203,7 @@ implementation
 
 {$R *.dfm}
 
-uses {$IFNDEF FPC}ADODB,{$IFEND} ZDBCIntfs, Math, IniFiles, ZClasses, IksCsv, ShellApi, ZDbcOdbcUtils, System.UITypes, Types, ZExceptions;
+uses {$IFNDEF FPC}ADODB,{$IFEND} ZDBCIntfs, Math, IniFiles, ZClasses, IksCsv, ShellApi, ZDbcOdbcUtils, System.UITypes, Types, ZExceptions, ZFBStructureTools;
 
 const
   ConnectionProfilePrefix = 'ConnectionProfile_';
@@ -171,6 +227,131 @@ end;
 procedure OpenWebAddress(Address: String);
 begin
   ShellExecute(0, 'open', PChar(Address), nil, nil, SW_SHOWNORMAL)
+end;
+
+procedure TGenericMetadataHandler.InitializeTree;
+var
+  TableTypes: TStringDynArray;
+  TableNames: TStringList;
+  x: Integer;
+  Node: TTreeNode;
+begin
+  if not Assigned(FConnection) or not assigned(FMetadataTree) then
+    exit;
+
+  FTablesNode := FMetadataTree.Items.AddChild(nil, 'Tables');
+  SetLength(TableTypes, 1);
+  TableTypes[0] := 'TABLE';
+  TableNames := TStringList.Create;
+  try
+    TableNames.BeginUpdate;
+    try
+      FConnection.GetTableNames('', '', TableTypes, TableNames);
+    finally
+      TableNames.EndUpdate;
+    end;
+    TableNames.Sort;
+
+    if Assigned(FOnTablesUpdate) then
+      FOnTablesUpdate(self, TableNames);
+
+    FMetadataTree.Items.BeginUpdate;
+    try
+      for X := 0 to TableNames.Count - 1 do begin
+        Node := MetadataTree.Items.AddChild(FTablesNode, TableNames.Strings[X]);
+        Node.SelectedIndex := 1;
+      end;
+    finally
+      MetadataTree.Items.EndUpdate;
+    end;
+  finally
+    FreeAndNil(TableNames);
+  end;
+end;
+
+function TGenericMetadataHandler.GetItemOptions(Node: TTreeNode): TMetadataNodeActions;
+begin
+  SetLength(Result, 0);
+end;
+
+procedure TFirebirdMetadataHandler.InitializeTree;
+var
+  TableTypes: TStringDynArray;
+  TableNames: TStringList;
+  x: Integer;
+  Node: TTreeNode;
+begin
+  if not Assigned(FConnection) or not assigned(FMetadataTree) then
+    exit;
+
+  FDatabaseNode := FMetadataTree.Items.AddChild(nil, 'Database');
+
+  FTablesNode := FMetadataTree.Items.AddChild(FDatabaseNode, 'Tables');
+  SetLength(TableTypes, 1);
+  TableTypes[0] := 'TABLE';
+  TableNames := TStringList.Create;
+  try
+    TableNames.BeginUpdate;
+    try
+      FConnection.GetTableNames('', '', TableTypes, TableNames);
+    finally
+      TableNames.EndUpdate;
+    end;
+    TableNames.Sort;
+
+    if Assigned(FOnTablesUpdate) then
+      FOnTablesUpdate(self, TableNames);
+
+    FMetadataTree.Items.BeginUpdate;
+    try
+      for X := 0 to TableNames.Count - 1 do begin
+        Node := MetadataTree.Items.AddChild(FTablesNode, TableNames.Strings[X]);
+        Node.SelectedIndex := 1;
+      end;
+    finally
+      MetadataTree.Items.EndUpdate;
+    end;
+  finally
+    FreeAndNil(TableNames);
+  end;
+end;
+
+function TFirebirdMetadataHandler.GetItemOptions(Node: TTreeNode): TMetadataNodeActions;
+begin
+  if Node = FDatabaseNode then begin
+    SetLength(Result, 1);
+    Result[0].OptionName := 'Get CreateScript';
+    Result[0].OptionExecutor := GetDatabaseSQL;
+  end else begin
+    SetLength(Result, 0);
+  end;
+end;
+
+procedure TFirebirdMetadataHandler.GetDatabaseSQL(Node: TTreeNode);
+var
+  SQL: TStrings;
+  ScriptGenerator: TFBScriptGenerator;
+begin
+  if not Assigned(FOnGetSqlScript) then
+    exit;
+  FOnGetSqlScript(Self, SQL);
+
+  if not Assigned(SQL) then
+    exit;
+
+  SQL.Clear;
+  ScriptGenerator := TFBScriptGenerator.Create(self);
+  try
+    ScriptGenerator.Source := FConnection;
+    ScriptGenerator.GetDbSql(SQL, False);
+  finally
+    FreeAndNil(ScriptGenerator);
+  end;
+end;
+
+procedure TForm1.OnTablesUpdate(Sender: TObject; Tables: TStrings);
+begin
+  SynSQLSyn.TableNames.Assign(Tables);
 end;
 
 procedure TForm1.doCsvExport(DataSet: TDataSet; FileName: String);
@@ -236,7 +417,7 @@ begin
     DatabaseEdt.Text := ConnStr;
   end;
   {$IFNDEF FPC}
-  if LowerCase(ProtocolsCB.Text) = 'ado' then begin
+  if (LowerCase(ProtocolsCB.Text) = 'ado') or (LowerCase(ProtocolsCB.Text) = 'oledb')  then begin
     ConnStr := ADODB.PromptDataSource(self.Handle, ConnStr);
     if ConnStr <> '' then begin
       HostEdt.Text := '';
@@ -408,32 +589,18 @@ begin
       else SynSQLSyn.SQLDialect := sqlStandard;
     end;
 
-    TablesNode := MetadataTreeV.Items.AddChild(nil, 'Tables');
-    SetLength(TableTypes, 1);
-    TableTypes[0] := 'TABLE';
-    TableNames := TStringList.Create;
-    try
-      TableNames.BeginUpdate;
-      try
-        DBConn.GetTableNames('', '', TableTypes, TableNames);
-      finally
-        TableNames.EndUpdate;
-      end;
-      TableNames.Sort;
-      SynSQLSyn.TableNames.Assign(TableNames);
+    if Assigned(MetadataHandler) then
+      FreeAndNil(MetadataHandler);
 
-      MetadataTreeV.Items.BeginUpdate;
-      try
-        for X := 0 to TableNames.Count - 1 do begin
-          Node := MetadataTreeV.Items.AddChild(TablesNode, TableNames.Strings[X]);
-          Node.SelectedIndex := 1;
-        end;
-      finally
-        MetadataTreeV.Items.EndUpdate;
-      end;
-    finally
-      FreeAndNil(TableNames);
-    end;
+    if DBConn.DbcConnection.GetServerProvider = spIB_FB then
+      MetadataHandler := TFirebirdMetadataHandler.Create(self)
+    else
+      MetadataHandler := TGenericMetadataHandler.Create(self);
+    MetadataHandler.OnTablesUpdate := OnTablesUpdate;
+    MetadataHandler.OnGetSqlScript := OnGetSqlScript;
+    MetadataHandler.Connection := DBConn;
+    MetadataHandler.MetadataTree := MetadataTreeV;
+    MetadataHandler.InitializeTree;
 
     SynSQLSyn.ProcNames.BeginUpdate;
     try
@@ -496,6 +663,7 @@ var
   TargetStr: String;
   Field: TField;
 begin
+  Field := nil;
   TargetStr := '';
   if Assigned(DataG.SelectedField) then
     Field := DataG.SelectedField
@@ -651,6 +819,31 @@ end;
 procedure TForm1.MetadataMDAfterOpen(DataSet: TDataSet);
 begin
   autosizeDS(MetadataMD);
+end;
+
+procedure TForm1.MetadataTreeVContextPopup(Sender: TObject; MousePos: TPoint;
+  var Handled: Boolean);
+var
+  Node: TTreeNode;
+  x: Integer;
+  MenuItem: TMenuItem;
+begin
+  Node := MetadataTreeV.Selected;
+
+  MetadataPM.Items.Clear;
+
+  if not Assigned(Node) then
+    exit;
+
+  MetadataNodeActions := MetadataHandler.GetItemOptions(Node);
+
+  for x := 0 to High(MetadataNodeActions) do begin
+    MenuItem := MetadataPM.CreateMenuItem;
+    MenuItem.Caption := MetadataNodeActions[x].OptionName;
+    MenuItem.Tag := x;
+    MenuItem.OnClick := ExecuteMetadataOption;
+    MetadataPM.Items.Add(MenuItem);
+  end;
 end;
 
 procedure TForm1.MetadataTreeVDblClick(Sender: TObject);
@@ -899,6 +1092,31 @@ begin
     then MessagesM.Lines.Add(Warning.Message);
     Result.ClearWarnings;
   end;
+end;
+
+procedure TForm1.ExecuteMetadataOption(Sender: TObject);
+var
+  index: Integer;
+begin
+  if Sender is TMenuItem then begin
+    index := TMenuItem(Sender).Tag;
+    if index < Length(MetadataNodeActions) then begin
+      if Assigned(MetadataNodeActions[index].OptionExecutor) then
+        MetadataNodeActions[index].OptionExecutor(MetadataTreeV.Selected)
+      else
+        ShowMessage('Metadata Node Executor is not assigned.');
+    end else
+      ShowMessage('Metadata Node Executor index is out of bounds.');
+  end else begin
+    ShowMessage('Sender is not a TMenuItem');
+  end;
+end;
+
+procedure TForm1.OnGetSqlScript(Sender: TObject; var Script: TStrings);
+begin
+  Script := SynEdit.Lines;
+
+  GetFileType(GetStdHandle(STD_OUTPUT_HANDLE));
 end;
 
 end.
